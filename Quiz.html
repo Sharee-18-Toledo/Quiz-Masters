@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History Quiz Game</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(-45deg, #6a11cb, #2575fc, #00c9ff, #92fe9d);
+      background-size: 400% 400%;
+      animation: gradientShift 10s ease infinite;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #333;
+    }
+
+    .quiz-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+      position: relative;
+      z-index: 1;
+    }
+
+    .quiz-container::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      right: -10px;
+      bottom: -10px;
+      background: linear-gradient(135deg, rgba(106, 17, 203, 0.3), rgba(37, 117, 252, 0.3));
+      filter: blur(20px);
+      border-radius: 20px;
+      z-index: -1;
+    }
+
+    .question {
+      font-size: 1.4em;
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .option {
+      padding: 15px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #f9f9f9;
+      font-size: 1.1em;
+    }
+
+    .option:hover {
+      background: #6a11cb;
+      color: #fff;
+      border-color: #6a11cb;
+      transform: scale(1.02);
+    }
+
+    .next-button,
+    .start-button,
+    .restart-button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 20px;
+      background: #2575fc;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .next-button:hover,
+    .start-button:hover,
+    .restart-button:hover {
+      background: #6a11cb;
+    }
+
+    .next-button {
+      display: none;
+    }
+
+    .timer {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      color: #ff4757;
+      font-weight: bold;
+    }
+
+    .score {
+      font-size: 2em;
+      margin-top: 20px;
+      color: #2ed573;
+    }
+
+    .result {
+      text-align: left;
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .result-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f1f2f6;
+    }
+
+    .correct {
+      color: #2ed573;
+    }
+
+    .incorrect {
+      color: #ff4757;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @media (max-width: 600px) {
+      .quiz-container { padding: 20px; }
+      .question { font-size: 1.2em; }
+      .option { font-size: 1em; }
+      .next-button, .start-button, .restart-button { font-size: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <!-- Start Screen -->
+    <div id="start-container">
+      <h1>Welcome to the History Quiz!</h1>
+      <p>Test your knowledge of world history — can you score 10/10?</p>
+      <button id="start-button" class="start-button">Start Game</button>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" style="display: none;">
+      <div id="timer" class="timer">Time Left: 60s</div>
+      <div id="question-container" class="question-container">
+        <div id="question" class="question"></div>
+        <div id="options" class="options"></div>
+        <button id="next-button" class="next-button">Next</button>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-container" class="result-container" style="display: none;">
+      <div id="score" class="score"></div>
+      <div id="result" class="result"></div>
+      <button id="restart-button" class="restart-button">Restart Quiz</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { question: "Who was the first President of the United States?", options: ["George Washington", "Abraham Lincoln", "John Adams", "Thomas Jefferson"], answer: "George Washington" },
+      { question: "In which year did World War II end?", options: ["1945", "1939", "1918", "1963"], answer: "1945" },
+      { question: "The Great Wall of China was built to protect against which group?", options: ["Mongols", "Romans", "Vikings", "Huns"], answer: "Mongols" },
+      { question: "Who discovered America in 1492?", options: ["Christopher Columbus", "Marco Polo", "Vasco da Gama", "Magellan"], answer: "Christopher Columbus" },
+      { question: "In which city was the Titanic built?", options: ["Belfast", "London", "New York", "Liverpool"], answer: "Belfast" },
+      { question: "Who wrote the Declaration of Independence?", options: ["Thomas Jefferson", "John Adams", "James Madison", "Benjamin Franklin"], answer: "Thomas Jefferson" },
+      { question: "Where did the Renaissance begin?", options: ["Italy", "France", "England", "Germany"], answer: "Italy" },
+      { question: "Who was known as the Maid of Orleans?", options: ["Joan of Arc", "Cleopatra", "Queen Elizabeth I", "Marie Antoinette"], answer: "Joan of Arc" },
+      { question: "In which year did man land on the moon?", options: ["1969", "1955", "1971", "1980"], answer: "1969" },
+      { question: "Which empire was ruled by Julius Caesar?", options: ["Roman Empire", "Ottoman Empire", "Persian Empire", "Macedonian Empire"], answer: "Roman Empire" }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timeLeft = 60;
+    let timer;
+    let selectedQuestions = [];
+    let userAnswers = [];
+
+    const startContainer = document.getElementById('start-container');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultContainer = document.getElementById('result-container');
+    const timerElement = document.getElementById('timer');
+    const questionElement = document.getElementById('question');
+    const optionsElement = document.getElementById('options');
+    const nextButton = document.getElementById('next-button');
+    const scoreElement = document.getElementById('score');
+    const resultElement = document.getElementById('result');
+    const restartButton = document.getElementById('restart-button');
+
+    document.getElementById('start-button').addEventListener('click', startGame);
+    nextButton.addEventListener('click', nextQuestion);
+    restartButton.addEventListener('click', restartQuiz);
+
+    function startGame() {
+      startContainer.style.display = 'none';
+      quizScreen.style.display = 'block';
+      score = 0;
+      currentQuestionIndex = 0;
+      timeLeft = 60;
+      userAnswers = [];
+      selectedQuestions = getRandomQuestions(questions, 10);
+      displayQuestion();
+      startTimer();
+    }
+
+    function getRandomQuestions(questions, count) {
+      const shuffled = [...questions].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    }
+
+    // ? Shuffle options for each question before displaying
+    function shuffleArray(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function displayQuestion() {
+      const question = selectedQuestions[currentQuestionIndex];
+      questionElement.textContent = question.question;
+      optionsElement.innerHTML = '';
+
+      // Shuffle answer options each time question is shown
+      const shuffledOptions = shuffleArray([...question.options]);
+
+      shuffledOptions.forEach(option => {
+        const button = document.createElement('div');
+        button.textContent = option;
+        button.classList.add('option');
+        button.addEventListener('click', () => selectAnswer(option, question.answer));
+        optionsElement.appendChild(button);
+      });
+    }
+
+    function selectAnswer(selected, correct) {
+      const options = document.querySelectorAll('.option');
+      options.forEach(option => {
+        option.style.pointerEvents = 'none';
+        if (option.textContent === correct) option.style.backgroundColor = '#2ed573';
+        else if (option.textContent === selected) option.style.backgroundColor = '#ff4757';
+      });
+      if (selected === correct) score++;
+      userAnswers.push({ question: selectedQuestions[currentQuestionIndex].question, selected, correct });
+      nextButton.style.display = 'block';
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < selectedQuestions.length) {
+        displayQuestion();
+        nextButton.style.display = 'none';
+      } else {
+        endQuiz();
+      }
+    }
+
+    function startTimer() {
+      timerElement.textContent = `Time Left: ${timeLeft}s`;
+      timer = setInterval(() => {
+        timeLeft--;
+        timerElement.textContent = `Time Left: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          endQuiz();
+        }
+      }, 1000);
+    }
+
+    function endQuiz() {
+      clearInterval(timer);
+      quizScreen.style.display = 'none';
+      resultContainer.style.display = 'block';
+      scoreElement.textContent = `Your Score: ${score}/${userAnswers.length}`;
+      resultElement.innerHTML = userAnswers.map((answer, index) => `
+        <div class="result-item">
+          <strong>Question ${index + 1}:</strong> ${answer.question}<br>
+          <span class="${answer.selected === answer.correct ? 'correct' : 'incorrect'}">Your Answer: ${answer.selected}</span><br>
+          <span class="correct">Correct Answer: ${answer.correct}</span>
+        </div>
+      `).join('');
+    }
+
+    function restartQuiz() {
+      resultContainer.style.display = 'none';
+      startContainer.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
+
